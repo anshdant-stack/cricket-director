@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Director: IPL Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 p-4 flex justify-between items-center shadow-md">
+        <h1 class="text-xl font-bold tracking-wider text-emerald-400">🏏 CRICKET DIRECTOR: IPL</h1>
+        <div id="stats-bar" class="flex gap-6 text-sm font-semibold hidden">
+            <div>Purse: <span id="stat-purse" class="text-emerald-400">₹100.0 Cr</span></div>
+            <div>Squad: <span id="stat-squad" class="text-sky-400">0/18</span></div>
+            <div>Overseas: <span id="stat-overseas" class="text-amber-400">0/8</span></div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 flex flex-col items-center justify-center p-6 max-w-4xl mx-auto w-full">
+
+        <!-- SCREEN 1: SETUP -->
+        <div id="screen-setup" class="bg-slate-800 border border-slate-700 rounded-xl p-8 shadow-xl text-center w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-4">Start Your Franchise Career</h2>
+            <p class="text-slate-400 text-sm mb-6">Take charge of an IPL franchise, build your squad through the mega auction, and lead them to the trophy.</p>
+            <div class="mb-4 text-left">
+                <label class="block text-xs uppercase tracking-wider text-slate-400 mb-2">Select Your Franchise</label>
+                <select id="team-name" class="w-full bg-slate-900 border border-slate-700 rounded p-3 text-slate-100 focus:outline-none focus:border-emerald-500">
+                    <option value="Mumbai Indians">Mumbai Indians</option>
+                    <option value="Chennai Super Kings">Chennai Super Kings</option>
+                    <option value="Royal Challengers Bengaluru">Royal Challengers Bengaluru</option>
+                    <option value="Kolkata Knight Riders">Kolkata Knight Riders</option>
+                </select>
+            </div>
+            <button onclick="startAuction()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-lg transition duration-200 shadow-lg">Enter Auction Room</button>
+        </div>
+
+        <!-- SCREEN 2: AUCTION -->
+        <div id="screen-auction" class="hidden w-full flex flex-col gap-6">
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl flex flex-col items-center text-center">
+                <span id="auction-category" class="text-xs uppercase tracking-widest text-emerald-400 mb-1 font-semibold">Marquee Set</span>
+                <h2 id="player-name" class="text-3xl font-extrabold mb-2">Player Name</h2>
+                <div class="flex gap-4 text-sm text-slate-400 mb-6">
+                    <span id="player-role">Role: Batter</span> | 
+                    <span id="player-nationality">India</span> | 
+                    <span>Rating: <strong id="player-rating" class="text-slate-100">88</strong></span>
+                </div>
+
+                <div class="bg-slate-900/80 border border-slate-700/60 rounded-lg p-4 w-full max-w-md mb-6">
+                    <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Current Highest Bid</div>
+                    <div id="current-bid" class="text-4xl font-black text-emerald-400">₹2.00 Cr</div>
+                    <div id="highest-bidder" class="text-xs text-slate-400 mt-1">Unsold</div>
+                </div>
+
+                <div class="flex gap-4 w-full max-w-md">
+                    <button onclick="placeBid()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-lg shadow-lg transition">Bid (+₹50L)</button>
+                    <button onclick="skipPlayer()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-3 rounded-lg shadow-lg transition">Pass / Drop</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: SQUAD & MATCH -->
+        <div id="screen-hub" class="hidden w-full flex flex-col gap-6">
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl">
+                <h2 class="text-xl font-bold mb-4">Your Final Squad</h2>
+                <div id="squad-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto mb-6 pr-2">
+                    <!-- Populated dynamically -->
+                </div>
+                <button onclick="startMatch()" class="w-full bg-sky-500 hover:bg-sky-600 text-slate-950 font-bold py-3 rounded-lg shadow-lg transition">Simulate Season Opener Match</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: MATCH RESULT -->
+        <div id="screen-match" class="hidden w-full bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl text-center">
+            <h2 class="text-2xl font-bold mb-2">Matchday Simulation</h2>
+            <div id="match-commentary" class="bg-slate-900 border border-slate-700 rounded-lg p-4 text-left h-48 overflow-y-auto font-mono text-sm mb-6 text-slate-300">
+                Match starting...
+            </div>
+            <button onclick="location.reload()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 px-6 rounded-lg shadow-lg transition">Restart Career</button>
+        </div>
+
+    </main>
+
+    <script>
+        const playerPool = [
+            { name: "Virat Kohli", role: "Batter", nationality: "India", rating: 92, base: 2.0 },
+            { name: "Jasprit Bumrah", role: "Bowler", nationality: "India", rating: 95, base: 2.0 },
+            { name: "Rashid Khan", role: "All-Rounder", nationality: "Afghanistan", rating: 91, base: 2.0, overseas: true },
+            { name: "Jos Buttler", role: "Wicketkeeper", nationality: "England", rating: 90, base: 2.0, overseas: true },
+            { name: "Ravindra Jadeja", role: "All-Rounder", nationality: "India", rating: 88, base: 1.5 },
+            { name: "Trent Boult", role: "Bowler", nationality: "New Zealand", rating: 87, base: 1.5, overseas: true },
+            { name: "Suryakumar Yadav", role: "Batter", nationality: "India", rating: 89, base: 2.0 },
+            { name: "Glenn Maxwell", role: "All-Rounder", nationality: "Australia", rating: 85, base: 1.5, overseas: true },
+            { name: "Yuzvendra Chahal", role: "Bowler", nationality: "India", rating: 84, base: 1.0 },
+            { name: "Shreyas Iyer", role: "Batter", nationality: "India", rating: 83, base: 1.5 }
+        ];
+
+        let gameState = {
+            purse: 100.0,
+            squad: [],
+            overseasCount: 0,
+            currentIndex: 0,
+            currentBid: 0,
+            highestBidder: null
+        };
+
+        function startAuction() {
+            document.getElementById('screen-setup').classList.add('hidden');
+            document.getElementById('screen-auction').classList.remove('hidden');
+            document.getElementById('stats-bar').classList.remove('hidden');
+            loadNextPlayer();
+        }
+
+        function loadNextPlayer() {
+            if (gameState.currentIndex >= playerPool.length || gameState.squad.length >= 5) {
+                endAuction();
+                return;
+            }
+            let p = playerPool[gameState.currentIndex];
+            document.getElementById('player-name').innerText = p.name;
+            document.getElementById('player-role').innerText = `Role: ${p.role}`;
+            document.getElementById('player-nationality').innerText = p.nationality;
+            document.getElementById('player-rating').innerText = p.rating;
+            
+            gameState.currentBid = p.base;
+            gameState.highestBidder = "Unsold";
+            updateAuctionUI();
+        }
+
+        function updateAuctionUI() {
+            document.getElementById('current-bid').innerText = `₹${gameState.currentBid.toFixed(2)} Cr`;
+            document.getElementById('highest-bidder').innerText = `Current Holder: ${gameState.highestBidder}`;
+            document.getElementById('stat-purse').innerText = `₹${gameState.purse.toFixed(1)} Cr`;
+            document.getElementById('stat-squad').innerText = `${gameState.squad.length}/5`;
+            document.getElementById('stat-overseas').innerText = `${gameState.overseasCount}/3`;
+        }
+
+        function placeBid() {
+            let p = playerPool[gameState.currentIndex];
+            let nextBid = gameState.currentBid + 0.5;
+            if (gameState.purse < nextBid) {
+                alert("Insufficient purse remaining!");
+                return;
+            }
+            gameState.currentBid = nextBid;
+            gameState.highestBidder = "You";
+            updateAuctionUI();
+
+            // Simulate AI counter-bid after 1 second if AI wins
+            setTimeout(() => {
+                if (gameState.highestBidder === "You" && Math.random() > 0.4 && gameState.currentBid < p.rating * 0.1) {
+                    gameState.currentBid += 0.5;
+                    gameState.highestBidder = "AI Franchise";
+                    updateAuctionUI();
+                } else if (gameState.highestBidder === "You") {
+                    // Hammer falls for player
+                    finalizePlayerWin(p);
+                }
+            }, 1000);
+        }
+
+        function skipPlayer() {
+            gameState.currentIndex++;
+            loadNextPlayer();
+        }
+
+        function finalizePlayerWin(p) {
+            if (p.overseas && gameState.overseasCount >= 3) {
+                alert("Overseas slot limit reached!");
+                skipPlayer();
+                return;
+            }
+            gameState.purse -= gameState.currentBid;
+            gameState.squad.push(p);
+            if (p.overseas) gameState.overseasCount++;
+            gameState.currentIndex++;
+            loadNextPlayer();
+        }
+
+        function endAuction() {
+            document.getElementById('screen-auction').classList.add('hidden');
+            document.getElementById('screen-hub').classList.remove('hidden');
+            
+            let listEl = document.getElementById('squad-list');
+            listEl.innerHTML = gameState.squad.map(p => `
+                <div class="bg-slate-900 border border-slate-700/60 p-3 rounded flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-slate-200">${p.name}</div>
+                        <div class="text-xs text-slate-400">${p.role} • ${p.nationality}</div>
+                    </div>
+                    <div class="text-emerald-400 font-semibold text-sm">Rating: ${p.rating}</div>
+                </div>
+            `).join('');
+        }
+
+        function startMatch() {
+            document.getElementById('screen-hub').classList.add('hidden');
+            document.getElementById('screen-match').classList.remove('hidden');
+            
+            let comm = document.getElementById('match-commentary');
+            comm.innerHTML = "Match underway vs Chennai Super Kings...<br>";
+            
+            setTimeout(() => {
+                comm.innerHTML += "Over 1: Neat start, 6 runs scored.<br>";
+            }, 800);
+            setTimeout(() => {
+                comm.innerHTML += "Over 5: Big hit! That's a maximum into the stands!<br>";
+            }, 1600);
+            setTimeout(() => {
+                comm.innerHTML += "Innings break: Your team posted 178/4 in 20 overs.<br>";
+            }, 2400);
+            setTimeout(() => {
+                comm.innerHTML += "Match Completed! Your bowlers defended the total. Victory by 15 runs! 🏆";
+            }, 3200);
+        }
+    </script>
+</body>
+</html>
